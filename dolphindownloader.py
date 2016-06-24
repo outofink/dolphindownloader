@@ -1,5 +1,5 @@
 """
-dolphindownloader v1.1
+dolphindownloader v1.1.1
 Automatically downloads the latest version of [Dolphin Emulator](https://dolphin-emu.org/).
 
 ## Requirements
@@ -26,7 +26,7 @@ def getversion():
     except URLError:
         print("\nERROR: Not connected to the internet.")
         sys.exit(1)
-    dolphinCurVer = dolphinBS.find('a', attrs={'class':"win"})['href']
+    dolphinCurVer = dolphinBS.find('a', attrs={'class':"btn-info"})['href']
     dolphinCurVer = re.findall(r"dolphin-master-(.*)-x64.7z", dolphinCurVer).pop()
     return dolphinCurVer
 def genlink(version):
