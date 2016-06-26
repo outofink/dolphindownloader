@@ -78,7 +78,7 @@ def main():
     os.chdir(".")
 
     os.system('cls' if os.name == 'nt' else 'clear')
-    print("Dolphin Downloader v1.1")
+    print("Dolphin Downloader v1.1.1")
     print("Retrieving most recent Dolphin development version...")
     dolphinCurVer = getversion()
 
