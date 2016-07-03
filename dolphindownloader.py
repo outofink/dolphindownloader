@@ -26,7 +26,7 @@ def getversion():
     except URLError:
         print("\nERROR: Not connected to the internet.")
         sys.exit(1)
-    dolphinCurVer = dolphinBS.find('a', attrs={'class':"btn-info"})['href']
+    dolphinCurVer = dolphinBS.find('a', attrs={'class':"btn always-ltr btn-info win"})['href']
     dolphinCurVer = re.findall(r"dolphin-master-(.*)-x64.7z", dolphinCurVer).pop()
     return dolphinCurVer
 def genlink(version):
