@@ -1,11 +1,6 @@
 """
-dolphindownloader v1.1.1
+dolphindownloader v2
 Automatically downloads the latest version of [Dolphin Emulator](https://dolphin-emu.org/).
-
-## Requirements
-* Python 3.x
-* BeautifulSoup
-* 7zip (specifically `7za.exe`)
 
 """
 
@@ -14,109 +9,84 @@ import re
 import shutil
 import subprocess
 import sys
-import time
 
-from urllib.error import HTTPError, URLError
-from urllib.request import urlopen, Request
-from bs4 import BeautifulSoup as BS
+import requests
+from bs4 import BeautifulSoup
 
-def getversion():
-    try:
-        dolphinBS = BS(urlopen(Request('https://dolphin-emu.org/download')).read(), "html.parser")
-    except URLError:
-        print("\nERROR: Not connected to the internet.")
-        sys.exit(1)
-    dolphinCurVer = dolphinBS.find('a', attrs={'class':"btn always-ltr btn-info win"})['href']
-    dolphinCurVer = re.findall(r"dolphin-master-(.*)-x64.7z", dolphinCurVer).pop()
-    return dolphinCurVer
-def genlink(version):
+class DolphinDownloader():
+    """Automatically downloads the latest version of Dolphin Emulator."""
+    def __init__(self):
+        self.link = ""
+        self.filename = ""
+        self.version = ""
 
-    final = "http://dl.dolphin-emu.org/builds/dolphin-master-{}-x64.7z".format(version)
-    try:
-        urlopen(final)
-    except HTTPError:
-        print("ERROR: Cannot resolve download URL.")
-        sys.exit(2)
-    return final
+    def getnewestversion(self):
+        """Gets download link, filename, and version of the newest version of Dolphin Emulator."""
+        page = requests.get('https://dolphin-emu.org/download')
+        parsed = BeautifulSoup(page.text, "html.parser")
+        link = parsed.find('a', attrs={'class':"btn always-ltr btn-info win"})['href']
+        self.link = link
+        self.filename = self.link.split('/')[-1]
+        self.version = re.findall(r"dolphin-master-(.*)-x64.7z", self.link).pop()
 
-def download(link):
-    file_name = link.split('/')[-1]
-    u = urlopen(link)
-    f = open(file_name, 'wb')
-    meta = u.info()
-    file_size = int(meta["Content-Length"])
-    file_sizeMB = file_size/1024.0/1024.0
-    print("Downloading: {0} filesize: {1:.2f}MB".format(file_name, file_sizeMB))
-    file_size_dl = 0
-    block_sz = 1024
-    while True:
-        buffer = u.read(block_sz)
-        if not buffer:
-            break
-        file_size_dl += len(buffer)
-        f.write(buffer)
-        p = float(file_size_dl) / file_size
-        status = r"{0:.2f}MB/{2:.2f}MB [{1:.2%}]".format(file_size_dl/1024.0/1024.0, p, file_sizeMB)
-        status = status + chr(8)*(len(status)+1)
-        sys.stdout.write(status)
-    print()
-    f.close()
-    return file_name
+    def download(self):
+        """Downloads the newest build of Dolphin."""
+        link = self.link
+        filename = self.filename
+        with open(filename, "wb") as archive:
+            print('Downloading {}...'.format(filename))
+            response = requests.get(link, stream=True)
+            total = response.headers.get('content-length')
 
-def extract(zipped):
-    cmd = ['7za', 'x', '-y', zipped]
-    try:
-    	sp = subprocess.Popen(cmd, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
-    except FileNotFoundError:
-        print("ERROR: Cannot find '7za.exe'.")
-        exit(3)
-    while sp.poll() is None:
-        time.sleep(0.1)
-    return True
+            downloaded = 0
+            total = int(total)/1024/1024 # in MB
+            for data in response.iter_content(chunk_size=4096):
+                downloaded += len(data)/1024/1024 # in MB
+                archive.write(data)
+                percent = str(int(100 * downloaded / total)).rjust(3)
+                percentbar = '[{}]'.format(('=' * int(int(percent)/2)).ljust(50))
+                progress = f'\r{percent}% {percentbar} {downloaded:.2f}MB/{total:.2f}MB'
+                sys.stdout.write(progress)
+                sys.stdout.flush()
+        print() # to add a newline
 
-def main():
-    os.chdir(".")
+    def extract(self):
+        """Extracts the newest build of Dolphin."""
+        cmd = ['7za', 'x', '-y', self.filename]
+        if not os.path.isfile("7za.exe"):
+            raise FileNotFoundError("Cannot find '7za.exe'.")
 
-    os.system('cls' if os.name == 'nt' else 'clear')
-    print("Dolphin Downloader v1.1.1")
-    print("Retrieving most recent Dolphin development version...")
-    dolphinCurVer = getversion()
+        print("Extracting {}...".format(self.filename))
+        process = subprocess.Popen(cmd, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
+        process.communicate()
 
-    print("\nMost recent version is %s." % dolphinCurVer)
-
-    try:
-        versionfile = open("Dolphin/version.txt", "r")
-        versiontext = versionfile.readline()
-        versionfile.close()
-        if versiontext >= dolphinCurVer:
-            old = False
-        else:
-            old = True
-    except FileNotFoundError:
-        old = True
-
-    if not old:
-        print("Dolphin is up to date!")
-    else:
-        linked = genlink(dolphinCurVer)
-        print("Downloading most recent version now... (please wait a bit)\n")
-        dolphinzip = download(linked)
-        print("\nExtracting Dolphin package...")
-
-        extract(dolphinzip)
-
-        print("\nCleaning up...")
-        os.remove(dolphinzip)
-        try:
+    def cleanup(self):
+        """Removes unnecessary files."""
+        print("Cleaning up...")
+        os.remove(self.filename)
+        if os.path.isdir('Dolphin'):
             shutil.rmtree('Dolphin')
-        except FileNotFoundError:
-            pass
         os.rename("Dolphin-x64", "Dolphin")
-        versionfile = open("Dolphin/version.txt", "w")
-        versionfile.write(dolphinCurVer)
-        versionfile.close()
-
-        print("\nDone!")
+        with open("Dolphin/version.txt", "w") as version:
+            version.write(self.version)
 
 if __name__ == "__main__":
-    main()
+    dolphindownloader = DolphinDownloader()
+
+    os.system("cls")
+    print("Dolphin Downloader v2")
+    print("Retrieving most recent Dolphin build version...")
+
+    dolphindownloader.getnewestversion()
+
+    print("Most recent version is {}.".format(dolphindownloader.version))
+
+    if os.path.isfile("Dolphin/version.txt"):
+        with open("Dolphin/version.txt", "r") as text:
+            if text.readline() >= dolphindownloader.version:
+                print("Dolphin is up to date!")
+                sys.exit(0)
+
+    dolphindownloader.download()
+    dolphindownloader.extract()
+    dolphindownloader.cleanup()
