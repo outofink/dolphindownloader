@@ -1,6 +1,6 @@
 """
 dolphindownloader v2
-Automatically downloads the latest version of [Dolphin Emulator](https://dolphin-emu.org/).
+Automatically downloads the latest version of Dolphin Emulator.
 
 """
 
