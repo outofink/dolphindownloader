@@ -67,8 +67,6 @@ class DolphinDownloader():
         if os.path.isdir('Dolphin'):
             shutil.rmtree('Dolphin')
         os.rename("Dolphin-x64", "Dolphin")
-        with open("Dolphin/version.txt", "w") as version:
-            version.write(self.version)
 
 if __name__ == "__main__":
     dolphindownloader = DolphinDownloader()
@@ -90,3 +88,6 @@ if __name__ == "__main__":
     dolphindownloader.download()
     dolphindownloader.extract()
     dolphindownloader.cleanup()
+
+    with open("Dolphin/version.txt", "w") as version:
+        version.write(dolphindownloader.version)
