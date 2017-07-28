@@ -28,6 +28,7 @@ class DolphinDownloader():
         self.link = link
         self.filename = self.link.split('/')[-1]
         self.version = re.findall(r"dolphin-master-(.*)-x64.7z", self.link).pop()
+        self.versionname = "Dolphin_" + dolphindownloader.version
 
     def download(self):
         """Downloads the newest build of Dolphin."""
@@ -64,14 +65,13 @@ class DolphinDownloader():
         """Removes unnecessary files."""
         print("Cleaning up...")
         os.remove(self.filename)
-        if os.path.isdir('Dolphin'):
-            shutil.rmtree('Dolphin')
-        os.rename("Dolphin-x64", "Dolphin")
+        if os.path.isdir(self.versionname):
+            shutil.rmtree(self.versionname)
+        os.rename("Dolphin-x64", self.versionname)
 
 if __name__ == "__main__":
     dolphindownloader = DolphinDownloader()
 
-    os.system("cls")
     print("Dolphin Downloader v2")
     print("Retrieving most recent Dolphin build version...")
 
@@ -79,8 +79,10 @@ if __name__ == "__main__":
 
     print("Most recent version is {}.".format(dolphindownloader.version))
 
-    if os.path.isfile("Dolphin/version.txt"):
-        with open("Dolphin/version.txt", "r") as text:
+    versionfile = os.path.join(dolphindownloader.versionname, "version.txt")
+
+    if os.path.isfile(versionfile):
+        with open(versionfile, "r") as text:
             if text.readline() >= dolphindownloader.version:
                 print("Dolphin is up to date!")
                 sys.exit(0)
@@ -89,5 +91,5 @@ if __name__ == "__main__":
     dolphindownloader.extract()
     dolphindownloader.cleanup()
 
-    with open("Dolphin/version.txt", "w") as version:
+    with open(versionfile, "w") as version:
         version.write(dolphindownloader.version)
