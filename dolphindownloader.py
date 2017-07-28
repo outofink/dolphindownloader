@@ -25,10 +25,11 @@ class DolphinDownloader():
         page = requests.get('https://dolphin-emu.org/download')
         parsed = BeautifulSoup(page.text, "html.parser")
         link = parsed.find('a', attrs={'class':"btn always-ltr btn-info win"})['href']
+        
         self.link = link
-        self.filename = self.link.split('/')[-1]
+        self.filename = os.path.basename(self.link)
         self.version = re.findall(r"dolphin-master-(.*)-x64.7z", self.link).pop()
-        self.versionname = "Dolphin_" + dolphindownloader.version
+        self.versionname = "Dolphin_" + self.version
 
     def download(self):
         """Downloads the newest build of Dolphin."""
