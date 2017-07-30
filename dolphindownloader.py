@@ -105,7 +105,7 @@ if __name__ == "__main__":
     else:
         dolphindownloader.getlatestbuild()
 
-    buildfile = os.path.join(dolphindownloader.buildname, "build.txt")
+    buildfile = os.path.join(dolphindownloader.buildname, ".build")
 
     if os.path.isfile(buildfile):
         with open(buildfile, "r") as text:
