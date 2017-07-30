@@ -1,6 +1,6 @@
 """
-dolphindownloader v2
-Automatically downloads the latest version of Dolphin Emulator.
+dolphindownloader v3
+Automatically downloads the latest build of Dolphin Emulator.
 
 """
 
@@ -15,31 +15,39 @@ from bs4 import BeautifulSoup
 
 
 class DolphinDownloader():
-    """Automatically downloads the latest version of Dolphin Emulator."""
+    """Automatically downloads the latest build of Dolphin Emulator."""
     def __init__(self):
         self.link = ""
         self.filename = ""
-        self.version = ""
-        self.versionname = ""
+        self.build = ""
+        self.buildname = ""
 
-    def getnewestversion(self):
-        """Gets download link, filename, and version of the newest version of Dolphin Emulator."""
+    def getlatestbuild(self):
+        """Gets download link and filename of the lastest build of Dolphin Emulator."""
+        print("Checking latest Dolphin build...")
+
         page = requests.get('https://dolphin-emu.org/download')
         parsed = BeautifulSoup(page.text, "html.parser")
         link = parsed.find('a', attrs={'class':"btn always-ltr btn-info win"})['href']
-
+        
         self.link = link
         self.filename = os.path.basename(self.link)
-        self.version = re.findall(r"dolphin-master-(.*)-x64.7z", self.link).pop()
-        self.versionname = "Dolphin_" + self.version
+        self.build = re.findall(r"dolphin-master-(.*)-x64.7z", self.link).pop()
+        self.buildname = "Dolphin_" + self.build
+
+        print("Most recent build is {}.".format(self.build))
 
     def download(self):
         """Downloads the newest build of Dolphin."""
         link = self.link
         filename = self.filename
+        #check if the build exists
+        response = requests.get(link, stream=True)
+        if response.headers['Content-Type'] != 'application/x-7z-compressed':
+            print("Bad link. That build probably doesn't exist.")
+            sys.exit(1)
         with open(filename, "wb") as archive:
             print('Downloading {}...'.format(filename))
-            response = requests.get(link, stream=True)
             total = response.headers.get('content-length')
 
             downloaded = 0
@@ -66,27 +74,23 @@ class DolphinDownloader():
 
     def cleanup(self):
         """Removes unnecessary files."""
-        print("Cleaning up...")
         os.remove(self.filename)
-        if os.path.isdir(self.versionname):
-            shutil.rmtree(self.versionname)
-        os.rename("Dolphin-x64", self.versionname)
+        if os.path.isdir(self.buildname):
+            shutil.rmtree(self.buildname)
+        os.rename("Dolphin-x64", self.buildname)
 
 if __name__ == "__main__":
     dolphindownloader = DolphinDownloader()
 
-    print("Dolphin Downloader v2")
-    print("Retrieving most recent Dolphin build version...")
+    print("Dolphin Downloader v3")
 
-    dolphindownloader.getnewestversion()
+    dolphindownloader.getlatestbuild()
 
-    print("Most recent version is {}.".format(dolphindownloader.version))
+    buildfile = os.path.join(dolphindownloader.buildname, "build.txt")
 
-    versionfile = os.path.join(dolphindownloader.versionname, "version.txt")
-
-    if os.path.isfile(versionfile):
-        with open(versionfile, "r") as text:
-            if text.readline() >= dolphindownloader.version:
+    if os.path.isfile(buildfile):
+        with open(buildfile, "r") as text:
+            if text.readline() >= dolphindownloader.build:
                 print("Dolphin is up to date!")
                 sys.exit(0)
 
@@ -94,5 +98,5 @@ if __name__ == "__main__":
     dolphindownloader.extract()
     dolphindownloader.cleanup()
 
-    with open(versionfile, "w") as version:
-        version.write(dolphindownloader.version)
+    with open(buildfile, "w") as build:
+        build.write(dolphindownloader.build)
