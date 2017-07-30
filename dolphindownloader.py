@@ -1,9 +1,9 @@
 """
 dolphindownloader v3
-Automatically downloads the latest build of Dolphin Emulator.
-
+A tool which downloads a specified (or the lastest) build of Dolphin Emulator.
 """
 
+import argparse
 import os
 import re
 import shutil
@@ -15,7 +15,7 @@ from bs4 import BeautifulSoup
 
 
 class DolphinDownloader():
-    """Automatically downloads the latest build of Dolphin Emulator."""
+    """A tool which downloads a specified (or the lastest) build of Dolphin Emulator."""
     def __init__(self):
         self.link = ""
         self.filename = ""
@@ -23,7 +23,7 @@ class DolphinDownloader():
         self.buildname = ""
 
     def getlatestbuild(self):
-        """Gets download link and filename of the lastest build of Dolphin Emulator."""
+        """Gets download link and filename of the lastest build of Dolphin."""
         print("Checking latest Dolphin build...")
 
         page = requests.get('https://dolphin-emu.org/download')
@@ -37,8 +37,17 @@ class DolphinDownloader():
 
         print("Most recent build is {}.".format(self.build))
 
+    def getbuild(self, build):
+        """Gets download link and filename of a specified build of Dolphin Emulator."""
+        self.link = "https://dl.dolphin-emu.org/builds/dolphin-master-{}-x64.7z".format(build)
+        self.filename = os.path.basename(self.link)
+        self.build = build
+        self.buildname = "Dolphin_" + self.build
+
+        print("Attempting to download build {}...".format(self.build))
+
     def download(self):
-        """Downloads the newest build of Dolphin."""
+        """Downloads a build of Dolphin."""
         link = self.link
         filename = self.filename
         #check if the build exists
@@ -63,7 +72,7 @@ class DolphinDownloader():
         print() # to add a newline
 
     def extract(self):
-        """Extracts the newest build of Dolphin."""
+        """Extracts Dolphin .7z archive."""
         cmd = ['7za', 'x', '-y', self.filename]
         if not os.path.isfile("7za.exe"):
             raise FileNotFoundError("Cannot find '7za.exe'.")
@@ -79,12 +88,22 @@ class DolphinDownloader():
             shutil.rmtree(self.buildname)
         os.rename("Dolphin-x64", self.buildname)
 
+def validbuild(build, regex=re.compile('^\d\.(0|5)-\d{1,4}$')):
+    if not regex.match(build):
+        raise argparse.ArgumentTypeError("Invalid build format. Try something like 5.0-4839.")
+    return build
+
 if __name__ == "__main__":
     dolphindownloader = DolphinDownloader()
-
     print("Dolphin Downloader v3")
 
-    dolphindownloader.getlatestbuild()
+    parser = argparse.ArgumentParser(description='Gets download link and filename of a specified build of Dolphin Emulator.')
+    parser.add_argument('-b', '--build', metavar='', type=validbuild, help="specify build version to download")
+    args = parser.parse_args()
+    if args.build:
+        dolphindownloader.getbuild(args.build)
+    else:
+        dolphindownloader.getlatestbuild()
 
     buildfile = os.path.join(dolphindownloader.buildname, "build.txt")
 

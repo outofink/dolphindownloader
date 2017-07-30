@@ -1,5 +1,5 @@
 # dolphindownloader
-Automatically downloads the latest version of [Dolphin Emulator](https://dolphin-emu.org/).
+A tool which downloads a specified (or the lastest) build of [Dolphin Emulator](https://dolphin-emu.org/).
 
 ## Requirements
 * [Python 3](https://www.python.org/)
