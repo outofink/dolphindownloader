@@ -94,12 +94,16 @@ def validbuild(build, regex=re.compile('^\d\.(0|5)-\d{1,4}$')):
     return build
 
 if __name__ == "__main__":
-    dolphindownloader = DolphinDownloader()
-    print("Dolphin Downloader v3")
-
     parser = argparse.ArgumentParser(description='Downloads a specified (or the lastest) build of Dolphin Emulator.')
     parser.add_argument('-b', '--build', metavar='', type=validbuild, help="specify build version to download")
+    parser.add_argument("-q", "--quiet", action="store_true", help="disables commandline output")
     args = parser.parse_args()
+    if args.quiet:
+        sys.stdout = open(os.devnull, 'w')
+
+    dolphindownloader = DolphinDownloader()
+    print("Dolphin Downloader v3")
+    
     if args.build:
         dolphindownloader.getbuild(args.build)
     else:
