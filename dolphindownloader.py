@@ -97,7 +97,7 @@ if __name__ == "__main__":
     dolphindownloader = DolphinDownloader()
     print("Dolphin Downloader v3")
 
-    parser = argparse.ArgumentParser(description='Gets download link and filename of a specified build of Dolphin Emulator.')
+    parser = argparse.ArgumentParser(description='Downloads a specified (or the lastest) build of Dolphin Emulator.')
     parser.add_argument('-b', '--build', metavar='', type=validbuild, help="specify build version to download")
     args = parser.parse_args()
     if args.build:
