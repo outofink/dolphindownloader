@@ -13,19 +13,21 @@ import sys
 import requests
 from bs4 import BeautifulSoup
 
+
 class DolphinDownloader():
     """Automatically downloads the latest version of Dolphin Emulator."""
     def __init__(self):
         self.link = ""
         self.filename = ""
         self.version = ""
+        self.versionname = ""
 
     def getnewestversion(self):
         """Gets download link, filename, and version of the newest version of Dolphin Emulator."""
         page = requests.get('https://dolphin-emu.org/download')
         parsed = BeautifulSoup(page.text, "html.parser")
         link = parsed.find('a', attrs={'class':"btn always-ltr btn-info win"})['href']
-        
+
         self.link = link
         self.filename = os.path.basename(self.link)
         self.version = re.findall(r"dolphin-master-(.*)-x64.7z", self.link).pop()
