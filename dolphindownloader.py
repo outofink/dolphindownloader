@@ -25,6 +25,8 @@ class DolphinDownloader():
     def getlatestbuild(self):
         """Gets download link and filename of the lastest build of Dolphin."""
         print("Checking latest Dolphin build...")
+        try:
+            page = requests.get('https://dolphin-emu.org/download')
             page.raise_for_status()
         except requests.exceptions.RequestException as error:
             print("Failed to connect. Check your internet connection.")
