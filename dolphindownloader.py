@@ -25,8 +25,11 @@ class DolphinDownloader():
     def getlatestbuild(self):
         """Gets download link and filename of the lastest build of Dolphin."""
         print("Checking latest Dolphin build...")
+            page.raise_for_status()
+        except requests.exceptions.RequestException as error:
+            print("Failed to connect. Check your internet connection.")
+            sys.exit(1)
 
-        page = requests.get('https://dolphin-emu.org/download')
         parsed = BeautifulSoup(page.text, "html.parser")
         link = parsed.find('a', attrs={'class':"btn always-ltr btn-info win"})['href']
         
@@ -51,14 +54,17 @@ class DolphinDownloader():
         link = self.link
         filename = self.filename
         #check if the build exists
-        response = requests.get(link, stream=True)
-        if response.headers['Content-Type'] != 'application/x-7z-compressed':
-            print("Bad link. That build probably doesn't exist.")
+        try:
+            response = requests.get(link, stream=True)
+            response.raise_for_status()
+        except requests.exceptions.HTTPError as error:
+            print(error)
+            print("That build probably doesn't exist.")
             sys.exit(1)
+
         with open(filename, "wb") as archive:
             print('Downloading {}...'.format(filename))
             total = response.headers.get('content-length')
-
             downloaded = 0
             total = int(total)/1024/1024 # in MB
             for data in response.iter_content(chunk_size=4096):
