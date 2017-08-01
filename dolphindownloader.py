@@ -88,6 +88,9 @@ class DolphinDownloader():
             shutil.rmtree(self.buildname)
         os.rename("Dolphin-x64", self.buildname)
 
+    def run(self):
+        subprocess.Popen(os.path.join(self.buildname, "Dolphin.exe"))
+
 def validbuild(build, regex=re.compile('^\d\.(0|5)-\d{1,4}$')):
     if not regex.match(build):
         raise argparse.ArgumentTypeError("Invalid build format. Try something like 5.0-4839.")
@@ -95,15 +98,17 @@ def validbuild(build, regex=re.compile('^\d\.(0|5)-\d{1,4}$')):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Downloads a specified (or the lastest) build of Dolphin Emulator.')
-    parser.add_argument('-b', '--build', metavar='', type=validbuild, help="specify build version to download")
     parser.add_argument("-q", "--quiet", action="store_true", help="disables commandline output")
+    parser.add_argument("-r", "--run", action="store_true", help="run Dolphin Emulator after downloading")
+    parser.add_argument("-b", "--build", type=validbuild, help="specify build version to download")
+
     args = parser.parse_args()
     if args.quiet:
         sys.stdout = open(os.devnull, 'w')
 
     dolphindownloader = DolphinDownloader()
     print("Dolphin Downloader v3")
-    
+
     if args.build:
         dolphindownloader.getbuild(args.build)
     else:
@@ -115,6 +120,7 @@ if __name__ == "__main__":
         with open(buildfile, "r") as text:
             if text.readline() >= dolphindownloader.build:
                 print("Dolphin is up to date!")
+                if args.run: dolphindownloader.run()
                 sys.exit(0)
 
     dolphindownloader.download()
@@ -123,3 +129,5 @@ if __name__ == "__main__":
 
     with open(buildfile, "w") as build:
         build.write(dolphindownloader.build)
+
+    if args.run: dolphindownloader.run()
