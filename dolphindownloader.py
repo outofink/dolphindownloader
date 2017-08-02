@@ -28,13 +28,13 @@ class DolphinDownloader():
         try:
             page = requests.get('https://dolphin-emu.org/download')
             page.raise_for_status()
-        except requests.exceptions.RequestException as error:
+        except requests.exceptions.RequestException:
             print("Failed to connect. Check your internet connection.")
             sys.exit(1)
 
         parsed = BeautifulSoup(page.text, "html.parser")
         link = parsed.find('a', attrs={'class':"btn always-ltr btn-info win"})['href']
-        
+
         self.link = link
         self.filename = os.path.basename(self.link)
         self.build = re.findall(r"dolphin-master-(.*)-x64.7z", self.link).pop()
@@ -104,17 +104,20 @@ class DolphinDownloader():
                 shutil.rmtree(folder)
 
     def run(self):
+        """Runs Dolphin."""
         subprocess.Popen(os.path.join(self.buildname, "Dolphin.exe"))
 
-def validbuild(build, regex=re.compile('^\d\.(0|5)-\d{1,4}$')):
+def validbuild(build):
+    """Check if build inputted is valid."""
+    regex = re.compile(r'^\d\.(0|5)-\d{1,4}$')
     if not regex.match(build):
         raise argparse.ArgumentTypeError("Invalid build format. Try something like 5.0-4839.")
     return build
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Downloads a specified (or the lastest) build of Dolphin Emulator.')
+    parser = argparse.ArgumentParser(description='Downloads a (or the lastest) build of Dolphin.')
     parser.add_argument("-q", "--quiet", action="store_true", help="disables commandline output")
-    parser.add_argument("-r", "--run", action="store_true", help="run Dolphin Emulator after downloading")
+    parser.add_argument("-r", "--run", action="store_true", help="run Dolphin after downloading")
     parser.add_argument("-b", "--build", type=validbuild, help="specify build version to download")
     parser.add_argument("-d", "--deleteoldbuilds", action="store_true", help="delete old builds")
 
@@ -137,7 +140,8 @@ if __name__ == "__main__":
         with open(buildfile, "r") as text:
             if text.readline() >= dolphindownloader.build:
                 print("Dolphin is up to date!")
-                if args.run: dolphindownloader.run()
+                if args.run:
+                    dolphindownloader.run()
                 if args.deleteoldbuilds:
                     dolphindownloader.deleteoldbuilds()
                 sys.exit(0)
@@ -146,9 +150,10 @@ if __name__ == "__main__":
     dolphindownloader.extract()
     dolphindownloader.cleanup()
 
-    with open(buildfile, "w") as build:
-        build.write(dolphindownloader.build)
+    with open(buildfile, "w") as file:
+        file.write(dolphindownloader.build)
 
-    if args.run: dolphindownloader.run()
+    if args.run:
+        dolphindownloader.run()
     if args.deleteoldbuilds:
         dolphindownloader.deleteoldbuilds()
