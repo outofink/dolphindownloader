@@ -96,6 +96,13 @@ class DolphinDownloader():
             shutil.rmtree(self.buildname)
         os.rename("Dolphin-x64", self.buildname)
 
+    def deleteoldbuilds(self):
+        """Deletes old builds."""
+        print("Deleting old builds...")
+        for folder in os.listdir():
+            if folder != self.buildname and folder.startswith("Dolphin_"):
+                shutil.rmtree(folder)
+
     def run(self):
         subprocess.Popen(os.path.join(self.buildname, "Dolphin.exe"))
 
@@ -109,8 +116,10 @@ if __name__ == "__main__":
     parser.add_argument("-q", "--quiet", action="store_true", help="disables commandline output")
     parser.add_argument("-r", "--run", action="store_true", help="run Dolphin Emulator after downloading")
     parser.add_argument("-b", "--build", type=validbuild, help="specify build version to download")
+    parser.add_argument("-d", "--deleteoldbuilds", action="store_true", help="delete old builds")
 
     args = parser.parse_args()
+
     if args.quiet:
         sys.stdout = open(os.devnull, 'w')
 
@@ -129,6 +138,8 @@ if __name__ == "__main__":
             if text.readline() >= dolphindownloader.build:
                 print("Dolphin is up to date!")
                 if args.run: dolphindownloader.run()
+                if args.deleteoldbuilds:
+                    dolphindownloader.deleteoldbuilds()
                 sys.exit(0)
 
     dolphindownloader.download()
@@ -139,3 +150,5 @@ if __name__ == "__main__":
         build.write(dolphindownloader.build)
 
     if args.run: dolphindownloader.run()
+    if args.deleteoldbuilds:
+        dolphindownloader.deleteoldbuilds()
